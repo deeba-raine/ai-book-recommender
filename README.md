@@ -1,0 +1,1 @@
+This is initial setup for our book recommendation system project
