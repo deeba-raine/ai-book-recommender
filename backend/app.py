@@ -62,7 +62,7 @@ class SettingsRequest(BaseModel):
 # ---- Static Frontend Serving -------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 async def serve_home():
-    html_path = Path(__file__).with_name("index.html")
+    html_path = Path(__file__).resolve().parent.parent / "frontend" / "index.html"
     if html_path.exists():
         return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
     return HTMLResponse("<h1>AI Book Assistant API Ready</h1><p>index.html not found</p>")
