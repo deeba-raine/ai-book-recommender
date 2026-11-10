@@ -19,7 +19,6 @@ class InputTooLong(ValueError):
 
 
 def clean(text):
-    """Reject over-long text and strip control characters (NFR-07, NFR-14)."""
     if not text:
         return ""
     if len(text) > MAX_CHARS:
