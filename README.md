@@ -9,6 +9,7 @@ This directory contains the working prototype connecting the single-file front e
 
 ## How to Run
 You Must Download and Extract goodreads_books.json.gz from `https://cseweb.ucsd.edu/~jmcauley/datasets/goodreads.html#datasets` and add it to data-pipeline folder to build the database.
+Do the Same for goodreads_book_authors.json.gz and goodreads_books_series.json.gz; add them both to data-pipeline folder
 
 Double-click `run_backend.bat` or run:
 ```bash
