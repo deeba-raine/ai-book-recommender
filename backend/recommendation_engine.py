@@ -97,8 +97,6 @@ class ChatBasedStrategy(RecommendationStrategy):
 
 
 class RecommendationEngine:
-    """Context class: holds the active strategy."""
-
     def __init__(self, strategy):
         self._strategy = strategy
 

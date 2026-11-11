@@ -8,6 +8,8 @@ This directory contains the working prototype connecting the single-file front e
 - **FastAPI Web Server** (`app.py`): Serves the front end at `http://127.0.0.1:8000` and provides RESTful endpoints.
 
 ## How to Run
+You Must Download and Extract goodreads_books.json.gz from `https://cseweb.ucsd.edu/~jmcauley/datasets/goodreads.html#datasets` and add it to data-pipeline folder to build the database.
+
 Double-click `run_backend.bat` or run:
 ```bash
 python -m uvicorn app:app --host 127.0.0.1 --port 8000 --reload

@@ -17,7 +17,6 @@ class DatabaseManager:
 
     @classmethod
     def get_instance(cls, db_path="books.db"):
-        """Create the instance on first call, return it afterwards."""
         with cls._lock:
             if cls._instance is None:
                 obj = object.__new__(cls)
@@ -25,8 +24,14 @@ class DatabaseManager:
                 cls._instance = obj
         return cls._instance
 
+    @classmethod
+    def present(cls, db_path=None) -> bool:
+        path = Path(db_path) if db_path is not None else Path(__file__).with_name("books.db")
+        return path.is_file()
+
     def _connect(self, db_path):
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
+        self.cur = self.conn.cursor()
         self.conn.row_factory = sqlite3.Row
         schema_file = Path(__file__).with_name("schema.sql")
         if schema_file.exists():
@@ -43,8 +48,20 @@ class DatabaseManager:
             cur = self.conn.execute(sql, params)
             return cur.lastrowid
 
+    # Non-Vague Commands for Database Builder Usage
+    def addBook(self, info: tuple) -> bool:
+        try:
+            self.cursor.execute(
+                "INSERT INTO books VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", info
+            )
+        except Exception:
+            return False
+        return True
+
+    def pushChanges(self) -> None:
+        self.conn.commit
+
     def save_progress(self, isbn, pages_read, day):
-        """Update pages, lifecycle state and today's reading log in one commit."""
         book_rows = self.query("SELECT pages FROM books WHERE isbn = ?", (isbn,))
         if not book_rows:
             return

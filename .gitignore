@@ -1,3 +1,9 @@
 books.db
 __pycache__/
 *.pyc
+*.csv
+*.json
+*.json.gz
+*.gz
+*.db
+!sample*.csv
