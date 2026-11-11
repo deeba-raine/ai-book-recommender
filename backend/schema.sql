@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS books(
     tags        TEXT NOT NULL, -- Seperated by Commas
     similar     TEXT, --INTEGER Seperated by Commas
     pages       INTEGER NOT NULL CHECK (pages > 0),
-    avgRating   REAL DEFAULT '',
+    avgRating   REAL DEFAULT 0.0,
 
     notes       TEXT DEFAULT '' CHECK (length(notes) <= 3000)
     );
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS chats (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     startDate   DATE NOT NULL,
     title       TEXT DEFAULT 'Conversation',
-    reference        TEXT REFERENCES books(id),
+    reference   INTEGER REFERENCES books(id),
     transcript  TEXT NOT NULL
 );
 
