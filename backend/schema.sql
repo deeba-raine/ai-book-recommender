@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS books(
     publDate    DATE NOT NULL,
     
     -- MetaData
-    series      TEXT NOT NULL, -- Seperated by Commas
+    series      TEXT NOT NULL, -- Seperated by Commas; series titles
     tags        TEXT NOT NULL, -- Seperated by Commas
     similar     TEXT, --INTEGER Seperated by Commas
     pages       INTEGER NOT NULL CHECK (pages > 0),

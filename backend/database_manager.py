@@ -51,15 +51,16 @@ class DatabaseManager:
     # Non-Vague Commands for Database Builder Usage
     def addBook(self, info: tuple) -> bool:
         try:
-            self.cursor.execute(
+            self.cur.execute(
                 "INSERT INTO books VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", info
             )
         except Exception:
+            # return false on fail for recording purposes
             return False
         return True
 
     def pushChanges(self) -> None:
-        self.conn.commit
+        self.conn.commit()
 
     def save_progress(self, isbn, pages_read, day):
         book_rows = self.query("SELECT pages FROM books WHERE isbn = ?", (isbn,))
