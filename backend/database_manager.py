@@ -62,31 +62,29 @@ class DatabaseManager:
     def pushChanges(self) -> None:
         self.conn.commit()
 
-    def save_progress(self, isbn, pages_read, day):
-        book_rows = self.query("SELECT pages FROM books WHERE isbn = ?", (isbn,))
+    # library.state codes from schema.sql: 0 Unstarted, 1 InProgress, 2 Finished, 3 Unfinished, 4 Rated
+    def save_progress(self, book_id, pages_read, day):
+        book_rows = self.query("SELECT pages FROM books WHERE id = ?", (book_id,))
         if not book_rows:
             return
-        book = book_rows[0]
-        pages_read = max(0, min(pages_read, book["pages"]))
-        state = ("Finished" if pages_read >= book["pages"]
-                 else "InProgress" if pages_read > 0 else "Unread")
-        
+        total = book_rows[0]["pages"]
+        pages_read = max(0, min(pages_read, total))
+        state = 2 if pages_read >= total else 1 if pages_read > 0 else 0
+
         # Check current progress to calculate pages added today
-        curr_rows = self.query("SELECT pages_read FROM library WHERE isbn = ?", (isbn,))
-        prev_pages = curr_rows[0]["pages_read"] if curr_rows else 0
+        curr_rows = self.query("SELECT progress FROM library WHERE id = ?", (book_id,))
+        prev_pages = curr_rows[0]["progress"] if curr_rows else 0
         added = max(0, pages_read - prev_pages)
 
         with self.conn:
             self.conn.execute(
-                """INSERT INTO library (isbn, pages_read, state, started_on)
+                """INSERT INTO library (id, state, progress, startDate)
                    VALUES (?, ?, ?, ?)
-                   ON CONFLICT(isbn) DO UPDATE SET
-                   pages_read = excluded.pages_read,
-                   state = excluded.state,
-                   started_on = COALESCE(library.started_on, excluded.started_on),
-                   finished_on = CASE WHEN excluded.pages_read >= (SELECT pages FROM books WHERE isbn=?) THEN ? ELSE library.finished_on END
+                   ON CONFLICT(id) DO UPDATE SET
+                   progress = excluded.progress,
+                   state = excluded.state
                 """,
-                (isbn, pages_read, state, day, isbn, day)
+                (book_id, state, pages_read, day)
             )
             if added > 0:
                 self.conn.execute(

@@ -56,6 +56,16 @@ CREATE TABLE IF NOT EXISTS chats (
     transcript  TEXT NOT NULL
 );
 
+-- Reader notes and highlights, one row per note (FR-17, FR-31)
+CREATE TABLE IF NOT EXISTS notes (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    book_id     INTEGER NOT NULL REFERENCES books(id),
+    kind        TEXT NOT NULL DEFAULT 'note',
+    body        TEXT NOT NULL CHECK (length(body) <= 3000),
+    created_on  DATE NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_notes_book ON notes(book_id);
+
 -- Settings-AKA User Data
 CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,

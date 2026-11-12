@@ -902,4 +902,16 @@ async function route(keep){
   for(const[re,nav,fn]of routes){const m=path.match(re);if(!m)continue;cur=nav;if(!keep){viewBook.editing=null}renderShell();await fn(m,p);if(!keep){scrollTo(0,0);if(drawer.open)closeDrawer()}document.title=({home:"Home",library:"My Library",browse:"Browse",["for-you"]:"For You",assistant:"Assistant",settings:"Settings"}[nav]||"")+" · AI Book Assistant";return}
   cur="";renderShell();main.innerHTML=`<div class="card empty">Page not found. <a class="lnk" href="#/">Go home</a></div>`;
 }
-window.addEventListener("hashchange",()=>route());route();
+/* Load the real catalogue and library state from the database when the backend is running.
+   Falls back to the built-in sample books when it is not. */
+async function loadBooksFromApi(){
+  try{
+    if(!(await api.checkBackend())) return;
+    const res = await fetch(`${API_BASE}/api/books?limit=2000`);
+    if(!res.ok) return;
+    const rows = await res.json();
+    if(Array.isArray(rows) && rows.length) S.books = rows;
+  }catch(e){ console.warn("Could not load books from database:", e); }
+}
+window.addEventListener("hashchange",()=>route());
+loadBooksFromApi().then(()=>route());

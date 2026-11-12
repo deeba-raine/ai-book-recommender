@@ -26,11 +26,11 @@ class SearchBasedStrategy(RecommendationStrategy):
         genre = context.get("genre", "")
         if genre:
             return self.db.query(
-                "SELECT * FROM books WHERE (title LIKE ? OR author LIKE ? OR themes LIKE ?) "
-                "AND genres LIKE ? LIMIT 50", (like, like, like, f"%{genre}%"))
+                "SELECT * FROM books WHERE (title LIKE ? OR author LIKE ? OR tags LIKE ?) "
+                "AND tags LIKE ? LIMIT 50", (like, like, like, f"%{genre}%"))
         return self.db.query(
             "SELECT * FROM books WHERE title LIKE ? OR author LIKE ? "
-            "OR themes LIKE ? LIMIT 50", (like, like, like))
+            "OR tags LIKE ? LIMIT 50", (like, like, like))
 
 
 class DashboardStrategy(RecommendationStrategy):
@@ -41,28 +41,29 @@ class DashboardStrategy(RecommendationStrategy):
 
     def recommend(self, context):
         liked = self.db.query(
-            "SELECT b.themes FROM library l JOIN books b USING(isbn) "
+            "SELECT b.tags FROM library l JOIN books b ON b.id = l.id "
             "WHERE l.rating >= 4")
-        wanted = {t.strip().lower() for row in liked for t in row["themes"].split(",") if t.strip()}
-        
+        wanted = {t.strip().lower() for row in liked for t in (row["tags"] or "").split(",") if t.strip()}
+
         # Favorite genres from settings
         fav_rows = self.db.query("SELECT value FROM settings WHERE key = 'fav_genres'")
         fav_genres = [g.strip().lower() for g in fav_rows[0]["value"].split(",")] if fav_rows and fav_rows[0]["value"] else []
 
+        # Books not yet in the library, or still marked Unstarted (state 0)
         unread = self.db.query(
-            "SELECT b.*, COALESCE(l.state, 'none') as status, COALESCE(l.rating, 0) as rating, "
-            "COALESCE(l.pages_read, 0) as progress "
-            "FROM books b LEFT JOIN library l USING(isbn) "
-            "WHERE l.state IS NULL OR l.state IN ('Unread', 'none') LIMIT 2000")
-        
+            "SELECT b.*, COALESCE(l.state, -1) AS state, COALESCE(l.rating, 0) AS rating, "
+            "COALESCE(l.progress, 0) AS progress, l.startDate AS startDate "
+            "FROM books b LEFT JOIN library l ON l.id = b.id "
+            "WHERE l.id IS NULL OR l.state = 0 LIMIT 2000")
+
         target_genre = context.get("genre", "").lower()
         if target_genre:
-            unread = [b for b in unread if target_genre in b["genres"].lower()]
+            unread = [b for b in unread if target_genre in (b["tags"] or "").lower()]
 
         scored = []
         for book in unread:
-            tags = {t.strip().lower() for t in book["themes"].split(",") if t.strip()}
-            genres = [g.strip().lower() for g in book["genres"].split(",") if g.strip()]
+            tags = {t.strip().lower() for t in (book["tags"] or "").split(",") if t.strip()}
+            genres = sorted(tags)
             overlap = len(tags & wanted)
             fav_match = any(g in fav_genres for g in genres)
             score = overlap * 2 + (2 if fav_match else 0)

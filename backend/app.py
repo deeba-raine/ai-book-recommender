@@ -28,7 +28,7 @@ handler = UserHandler()
 
 # ---- Request / Response Models -----------------------------------------------
 class ProgressRequest(BaseModel):
-    isbn: str
+    isbn: int                      # book id (books.id)
     pages: int
     day: Optional[str] = None
 
@@ -38,7 +38,7 @@ class RateRequest(BaseModel):
 
 
 class NoteRequest(BaseModel):
-    isbn: str
+    isbn: int
     body: str
     kind: Optional[str] = "note"
 
@@ -49,7 +49,7 @@ class NoteEditRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     query: str
-    isbn: Optional[str] = None
+    isbn: Optional[int] = None
 
 
 class SettingsRequest(BaseModel):
@@ -62,7 +62,7 @@ class SettingsRequest(BaseModel):
 # ---- Static Frontend Serving -------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 async def serve_home():
-    html_path = Path(__file__).resolve().parent.parent / "frontend" / "index.html"
+    html_path = Path(__file__).resolve().parent.parent / "frontend" / "public" / "index.html"
     if html_path.exists():
         return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
     return HTMLResponse("<h1>AI Book Assistant API Ready</h1><p>index.html not found</p>")
@@ -82,8 +82,13 @@ async def search_books(q: str = Query("", max_length=200), genre: str = ""):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@app.get("/api/books")
+async def list_books(limit: int = Query(200, ge=1, le=2000), offset: int = Query(0, ge=0)):
+    return handler.list_books(limit, offset)
+
+
 @app.get("/api/books/{isbn}")
-async def get_book(isbn: str):
+async def get_book(isbn: int):
     book = handler.get_book(isbn)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
@@ -101,7 +106,7 @@ async def save_progress(req: ProgressRequest):
 
 
 @app.post("/api/books/{isbn}/rate")
-async def rate_book(isbn: str, req: RateRequest):
+async def rate_book(isbn: int, req: RateRequest):
     handler.rate_book(isbn, req.rating)
     return {"ok": True, "isbn": isbn, "rating": req.rating}
 
@@ -109,20 +114,20 @@ async def rate_book(isbn: str, req: RateRequest):
 @app.post("/api/library/add")
 async def add_to_library(req: dict):
     isbn = req.get("isbn")
-    if not isbn:
+    if isbn is None:
         raise HTTPException(status_code=400, detail="Missing isbn")
-    handler.add_to_library(isbn)
+    handler.add_to_library(int(isbn))
     return {"ok": True, "isbn": isbn}
 
 
 @app.delete("/api/library/{isbn}")
-async def remove_from_library(isbn: str):
+async def remove_from_library(isbn: int):
     handler.remove_from_library(isbn)
     return {"ok": True, "isbn": isbn}
 
 
 @app.post("/api/books/{isbn}/reread")
-async def reread_book(isbn: str):
+async def reread_book(isbn: int):
     handler.reread_book(isbn)
     return {"ok": True, "isbn": isbn}
 
