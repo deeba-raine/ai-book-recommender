@@ -7,6 +7,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, List
 
@@ -207,6 +208,11 @@ async def chat_assistant(req: ChatRequest):
         return handler.submit_chat_query(req.query, req.isbn)
     except InputTooLong as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# Serve styles.css and script.js next to index.html. Mounted last so API routes win.
+PUBLIC_DIR = Path(__file__).resolve().parent.parent / "frontend" / "public"
+app.mount("/", StaticFiles(directory=PUBLIC_DIR), name="frontend")
 
 
 if __name__ == "__main__":
