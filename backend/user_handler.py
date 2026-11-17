@@ -179,6 +179,9 @@ class UserHandler:
         clean_body = clean(body)
         if not clean_body:
             raise ValueError("Note text cannot be empty")
+        # Check the book first so a bad id gives a readable 400, not a raw IntegrityError (500)
+        if not self.db.query("SELECT id FROM books WHERE id = ?", (book_id,)):
+            raise ValueError("Book not found")
         today_str = date.today().isoformat()
         note_id = self.db.execute(
             "INSERT INTO notes (book_id, kind, body, created_on) VALUES (?, ?, ?, ?)",
