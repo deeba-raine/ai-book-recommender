@@ -44,8 +44,14 @@ client = TestClient(app_module.app)
 @pytest.fixture(autouse=True)
 def clean_notes():
     DB.execute("DELETE FROM notes")
+    DB.execute("DELETE FROM library")
+    DB.execute("DELETE FROM reading_log")
+    DB.execute("DELETE FROM settings")
     yield
     DB.execute("DELETE FROM notes")
+    DB.execute("DELETE FROM library")
+    DB.execute("DELETE FROM reading_log")
+    DB.execute("DELETE FROM settings")
 
 
 def note_rows():
@@ -159,3 +165,57 @@ def test_chat_falls_back_when_the_ai_is_unavailable():
     handler = UserHandler(llm=broken)
     result = handler.submit_chat_query("recommend something")
     assert result["text"] == "The AI key is missing."
+
+
+# ---- Five short demonstration cases (16-20) ---------------------------------
+def test_16_list_books_returns_sample_catalog():
+    r = client.get("/api/books", params={"limit": 10})
+    assert r.status_code == 200
+    assert {book["title"] for book in r.json()} >= {"Dune", "Emma"}
+
+
+def test_17_save_progress_updates_library_and_reading_log():
+    r = client.post("/api/progress", json={"isbn": 1, "pages": 100, "day": "2026-11-23"})
+    assert r.status_code == 200
+    assert r.json()["ok"] is True
+    assert DB.query("SELECT progress, state FROM library WHERE id = 1") == [
+        {"progress": 100, "state": 1}
+    ]
+    assert DB.query("SELECT pages FROM reading_log WHERE day = '2026-11-23'") == [
+        {"pages": 100}
+    ]
+
+
+def test_18_rating_a_book_adds_it_to_the_library():
+    r = client.post("/api/books/2/rate", json={"rating": 5})
+    assert r.status_code == 200
+    assert r.json()["rating"] == 5
+    row = DB.query("SELECT state, rating FROM library WHERE id = 2")[0]
+    assert row == {"state": 4, "rating": 5}
+
+
+def test_19_add_reread_and_remove_book_from_library():
+    assert client.post("/api/library/add", json={"isbn": 1}).status_code == 200
+    assert client.post("/api/books/1/reread").status_code == 200
+    assert client.get("/api/library").json()[0]["isbn"] == "1"
+    assert client.delete("/api/library/1").status_code == 200
+    assert client.get("/api/library").json() == []
+
+
+def test_20_save_settings_and_reading_log_then_read_them_back():
+    settings = client.post("/api/settings", json={
+        "name": "Demo Reader",
+        "goal": 40,
+        "yearGoal": 12,
+        "favGenres": ["Fantasy", "Mystery"],
+    })
+    log = client.post("/api/reading-log", json={"day": "2026-11-23", "pages": 25})
+    assert settings.status_code == 200
+    assert log.status_code == 200
+    assert client.get("/api/settings").json() == {
+        "name": "Demo Reader",
+        "goal": 40,
+        "yearGoal": 12,
+        "favGenres": ["Fantasy", "Mystery"],
+    }
+    assert client.get("/api/reading-log").json() == {"2026-11-23": 25}
