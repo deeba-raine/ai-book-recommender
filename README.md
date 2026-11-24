@@ -39,3 +39,15 @@ To simulate time passing and test streak changes:
    - **`+1 Day (Hit Goal)`**: Logs your daily goal (40 pages) and advances to the next day. The streak increases and the headline displays:
      `You're on a roll!` with glowing flame candles.
    - **`Reset to Today`**: Snaps the clock back to the real calendar date.
+
+## Demo setup (no full database)
+If you don't have the full Goodreads `books.db`, build the small demo catalog instead:
+```bash
+python data-pipeline/make_demo_db.py
+```
+Then start the app as usual. To run the acceptance tests on their own:
+```bash
+python -m pytest tests/test_acceptance.py -v
+```
+The acceptance tests run on a temporary copy of `backend/books.db`, so they don't change your data.
+Run the integration tests separately: `python -m pytest tests/test_integration_notes.py`.
