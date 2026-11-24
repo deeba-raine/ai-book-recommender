@@ -1,0 +1,12 @@
+books.db
+__pycache__/
+*.pyc
+*.csv
+*.json
+*.json.gz
+*.gz
+*.db
+*.db.*
+!sample*.csv
+.env
+*.db-journal

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Book Assistant</title>
+<!--
+  AI Book Assistant: front end, Sprint 2 update (single file, runs offline, no build step).
+
+  Pages (from the team's sticky notes)
+    #/              Home: goals, continue reading, picked for you
+    #/library       My Library: books you track, notes under each book
+    #/browse        Search / All Books (+ "More by this author" and "Similar books")
+    #/for-you       Recommendations, filterable by genre
+    #/book/<ISBN>   Book page: ISBN is the primary key, details, reading progress, appended notes
+    #/assistant     Assistant: read-only chat with past conversations
+    #/settings      User settings
+
+  Requirements covered (Sprint 2 documentation, Table 2.1)
+    FR-01/02 title + author search (200 char limit)   Browse + header search
+    FR-03    book detail view                         Book page
+    FR-04/05 More by this author / Similar books      Browse results + Book page
+    FR-06..10 Unread > In Progress > Finished         setProgress() + status pill
+    FR-08    start date logged automatically          setProgress()
+    FR-09    page count updates                       Home "Log pages", Book page "Update pages"
+    FR-11    estimated completion from reading speed  estFinish()
+    FR-12    adaptive daily goal (suggestion)         suggestGoal()
+    FR-13/14 custom goal + goal progress bar          Home goals card, Settings
+    FR-15    goal alerts                              goalAlert()
+    FR-16    1-5 star ratings                         starInput()
+    FR-17    notes + highlights, 3,000 char limit     notes section (add / edit / delete)
+    FR-18..20 themes, entities, sentiment from notes  insights card (mock NLP, swap for backend)
+    FR-25    >=3 recommendations with theme tags      Home, For You
+    FR-26/29 chat UI, recs only when asked            Assistant page + drawer
+    NFR-07   reject text over 3,000 characters        data-limit counters
+
+  Backend hookup: every read/write goes through the small "data layer" near the top of
+  the script (S, save(), recommend(), mockAsk()). Replace those with calls to the
+  UserHandler endpoints and the rest of the UI stays the same. The assistant never
+  writes to the library, it only reads.
+-->
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top"><div class="top-in">
+  <a class="logo" href="#/"><span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6c3-1.200 6-.8 9 1 3-1.800 6-2.200 9-1v12c-3-1.200-6-.8-9 1-3-1.800-6-2.200-9-1z"/><path d="M12 7v12"/></svg></span>AI Book Assistant</a>
+  <form class="search" id="gs" role="search"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+    <input id="gq" type="search" maxlength="200" placeholder="Search by title or author" aria-label="Search books by title or author"><button>Search</button></form>
+  <a class="avatar" id="av" href="#/settings" aria-label="Settings" title="Settings">R</a>
+</div></header>
+<nav class="nav" aria-label="Main"><div class="nav-in" id="nav"></div></nav>
+<main id="main" tabindex="-1"></main>
+
+<button class="fab" id="fab" aria-haspopup="dialog"></button>
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-label="Assistant" aria-hidden="true">
+  <div class="dh"><h2>Ask the Assistant</h2>
+    <button type="button" class="ib" data-act="d-new" title="New chat" aria-label="New chat"></button>
+    <a class="ib" href="#/assistant" data-act="d-full" title="Open full page" aria-label="Open full page"></a>
+    <button type="button" class="ib" data-act="d-close" title="Close" aria-label="Close"></button></div>
+  <div class="dbody" id="dbody"></div>
+</aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
